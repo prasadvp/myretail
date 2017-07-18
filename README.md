@@ -244,6 +244,6 @@ http://localhost:8080/retail/v1/products/100
 
 # References #
 
-[Spring boot] [https://projects.spring.io/spring-boot/]
+[Spring boot] (https://projects.spring.io/spring-boot/)
 
 
