@@ -8,10 +8,10 @@ import com.myretail.catalog.persistence.entity.ProductPriceEntity;
 
 
 @Repository
-public interface ProductPriceRepoistory extends MongoRepository<ProductPriceEntity, Long> {
+public interface ProductPriceRepoistory extends MongoRepository<ProductPriceEntity, String> {
 
 	
-	 public ProductPriceEntity findByProductId(long productId);
+	 ProductPriceEntity findByProductId(String productId);
 	 
 	
 }

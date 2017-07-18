@@ -4,9 +4,8 @@ public class Message {
 
 	private String code;
 	
-	private String message;
+	private String description;
 	
-	//private String severity;
 
 	public String getCode() {
 		return code;
@@ -16,21 +15,20 @@ public class Message {
 		this.code = code;
 	}
 
-	public String getMessage() {
-		return message;
+	public String getDescription() {
+		return description;
 	}
 
-	public void setMessage(String message) {
-		this.message = message;
+	public void setDescription(String description) {
+		this.description = description;
 	}
 
-	/*public String getSeverity() {
-		return severity;
+	public Message(String code, String description) {
+		super();
+		this.code = code;
+		this.description = description;
 	}
 
-	public void setSeverity(String severity) {
-		this.severity = severity;
-	}*/
 	
 	
 }

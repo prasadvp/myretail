@@ -2,7 +2,7 @@ package com.myretail.catalog.model;
 
 
 
-public class SearchProductResponse extends Response {
+public class ProductResponse extends Response {
 
 	private Product product;
 

@@ -1,4 +1,4 @@
-package com.vp.projects.myretail_products_svc;
+package com.myretail.catalog.myretail_products_svc;
 
 import junit.framework.Test;
 import junit.framework.TestCase;

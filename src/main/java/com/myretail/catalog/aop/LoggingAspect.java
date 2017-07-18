@@ -15,11 +15,12 @@ public class LoggingAspect {
 	
 	@Around("execution (* com.myretail.catalog.controller..*(..)) "
 			+ "|| execution (* com.myretail.catalog.helper..*(..)) "
-			+ "|| execution (* com.myretail.catalog.service..*(..))")
-	//@Around("execution (* com.myretail.catalog.controller..*(..)) ")
+			+ "|| execution (* com.myretail.catalog.service..*(..))"
+			+ "|| execution (* com.myretail.catalog.persistence.dao..*(..))")
+	
 	 public Object instrument(ProceedingJoinPoint joinPoint) throws Throwable {
 		 
-		System.out.println("Inside logging ");
+		LOGGER.info("LoggingAspect::Inside logging ");
 		 Object retVal = null;
 		 long startTime = System.currentTimeMillis();
 		 long elapsedTime;
@@ -31,12 +32,12 @@ public class LoggingAspect {
 			logMessage.append(".");
 			logMessage.append(signature.getName());
 			
-			
-			LOGGER.info("BEGIN EXECUTION :" +logMessage.toString());
+			String logMsg = logMessage.toString();
+			LOGGER.info("BEGIN EXECUTION :{}",logMsg);
 			retVal = joinPoint.proceed();
 			elapsedTime = System.currentTimeMillis() - startTime;
 			
-			LOGGER.info("END EXECUTION :" + logMessage.toString() + ". Execution time {} ms", elapsedTime );
+			LOGGER.info("END EXECUTION : {}  Execution time {} ms" , logMsg , elapsedTime );
 			
 			
 		} catch (Exception e) {

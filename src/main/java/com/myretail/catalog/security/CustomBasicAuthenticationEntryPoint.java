@@ -16,9 +16,9 @@ public class CustomBasicAuthenticationEntryPoint implements AuthenticationEntryP
 	@Override
 	public void commence(HttpServletRequest request, HttpServletResponse response,
 			AuthenticationException authException) throws IOException, ServletException {
-		// TODO Auto-generated method stub
+		
 		response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-       // response.addHeader("WWW-Authenticate", "Basic");
+     
 	}
 
 

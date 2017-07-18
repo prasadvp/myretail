@@ -1,26 +1,31 @@
-package com.myretail.catalog.helper;
+package com.myretail.catalog.persistence.dao.impl;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 
+import com.myretail.catalog.persistence.dao.ProductDAO;
 import com.myretail.catalog.persistence.entity.ProductPriceEntity;
 import com.myretail.catalog.persistence.repoistory.ProductPriceRepoistory;
 
-@Component
-public class ProductServiceHelper {
+@Repository("productDAO")
+public class ProductDAOImpl implements ProductDAO{
+
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(ProductDAOImpl.class);
 
 	@Autowired
 	private ProductPriceRepoistory prodPriceRepo; 
 	
 	@Cacheable(value ="products", key = "#productId")
-	public ProductPriceEntity getProductById(long productId) {
-		System.out.println("Fetching product price for "+ productId);
-		ProductPriceEntity prodPriceObj = prodPriceRepo.findByProductId(productId);
+	public ProductPriceEntity getProductById(String productId) {
+		LOGGER.info("Fetching product price for {}", productId);
+		return prodPriceRepo.findByProductId(productId);
 		
-		return prodPriceObj;
+		
 	}
 	
 	@CachePut(value = "products" , key = "#entity.productId")

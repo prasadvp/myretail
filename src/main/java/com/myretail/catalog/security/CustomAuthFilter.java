@@ -17,6 +17,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 public class CustomAuthFilter extends OncePerRequestFilter {
 
+	private static final String AUTH_TOKEN = "Auth-Token";
 	private AuthenticationManager authenticationManager;
 
 	public CustomAuthFilter(AuthenticationManager authenticationManager) {
@@ -26,8 +27,8 @@ public class CustomAuthFilter extends OncePerRequestFilter {
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
 			throws ServletException, IOException {
-		// TODO Auto-generated method stub
-		String token = request.getHeader("Auth-Token");
+		
+		String token = request.getHeader(AUTH_TOKEN);
 
 		PreAuthenticatedAuthenticationToken authToken = new PreAuthenticatedAuthenticationToken(token, null);
 		try {
@@ -42,11 +43,8 @@ public class CustomAuthFilter extends OncePerRequestFilter {
 	}
 	@Override
 	protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
-		if(HttpMethod.GET.name().equals(request.getMethod())) {
-			return true;
-		}else {
-			return false;
-		}
+		
+		return HttpMethod.GET.name().equals(request.getMethod());
 	}
 	
 

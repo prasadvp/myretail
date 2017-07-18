@@ -13,9 +13,7 @@ public class ProductPriceEntity {
 
 	
 	@Id
-	private String id;
-	
-	private long productId;
+	private String productId;
 	
 	private BigDecimal price;
 	
@@ -27,7 +25,7 @@ public class ProductPriceEntity {
 
 	
 	
-	public ProductPriceEntity(long productId, BigDecimal price, String currencyCode) {
+	public ProductPriceEntity(String productId, BigDecimal price, String currencyCode) {
 		
 		this.productId = productId;
 		this.price = price;
@@ -36,11 +34,11 @@ public class ProductPriceEntity {
 
 	
 
-	public long getProductId() {
+	public String getProductId() {
 		return productId;
 	}
 
-	public void setProductId(long productId) {
+	public void setProductId(String productId) {
 		this.productId = productId;
 	}
 
@@ -78,17 +76,4 @@ public class ProductPriceEntity {
 		this.currencyCode = currencyCode;
 	}
 
-
-
-	public String getId() {
-		return id;
-	}
-
-
-
-	public void setId(String id) {
-		this.id = id;
-	}
-	
-	
 }

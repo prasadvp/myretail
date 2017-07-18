@@ -1,5 +1,7 @@
 package com.myretail.catalog.security;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,14 +13,22 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
+import com.myretail.catalog.exception.RetailServiceException;
+import com.myretail.catalog.helper.RetailConstants;
+
 @Configuration
 @EnableWebSecurity
 
 public class CustomWebSecurityAdapter extends WebSecurityConfigurerAdapter {
-
+	private static final Logger LOGGER = LoggerFactory.getLogger(CustomWebSecurityAdapter.class);
 	@Autowired
-    public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
-		auth.authenticationProvider(new CustomAuthProvider());
+    public void configureGlobal(AuthenticationManagerBuilder auth)  {
+		try {
+			auth.authenticationProvider(new CustomAuthProvider());
+		} catch (Exception e) {
+			LOGGER.error("Exception during Authenticating request  "+ e.getMessage());
+			throw new RetailServiceException(RetailConstants.DEFAULT_EXCEPTION.getCode(), RetailConstants.DEFAULT_EXCEPTION.getDescription(),e.getMessage());
+		}
     }
 	
 	@Override

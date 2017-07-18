@@ -1,100 +1,173 @@
 package com.myretail.catalog.controller;
 
 import java.math.BigDecimal;
-import java.util.concurrent.CompletableFuture;
+
+import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.myretail.catalog.exception.ExceptionConstants;
-import com.myretail.catalog.helper.CommonUtil;
-import com.myretail.catalog.model.Price;
+import com.myretail.catalog.exception.RetailServiceException;
+import com.myretail.catalog.helper.RetailConstants;
+import com.myretail.catalog.model.Message;
 import com.myretail.catalog.model.Product;
-import com.myretail.catalog.model.SearchProductResponse;
+import com.myretail.catalog.model.ProductResponse;
 import com.myretail.catalog.model.Status;
 import com.myretail.catalog.persistence.entity.ProductPriceEntity;
 import com.myretail.catalog.service.ProductService;
 
-
 @RestController
 @RequestMapping(value = "/retail")
-public class ProductController  {
-	
+public class ProductController {
+
 	@Autowired
+	@Qualifier("productService")
 	public ProductService productSvc;
-	
+
+
 	private static final Logger LOGGER = LoggerFactory.getLogger(ProductController.class);
 
-	@RequestMapping(value ="/v1/products/{productId}", method=RequestMethod.GET)
-	public SearchProductResponse getProducts(@PathVariable Long productId) {
-		SearchProductResponse response = new SearchProductResponse();
-		LOGGER.debug("ProductController:: SearchProductResponse :: Product ID from the request "+ productId);
+	@RequestMapping(value = "/v1/products/{productId}", method = RequestMethod.GET)
+	public ProductResponse getProducts(@PathVariable Long productId, HttpServletResponse httpResponse) {
+		ProductResponse response = new ProductResponse();
+
+		logDebugMsg("ProductController:: SearchProductResponse :: Product ID from the request " + productId);
+
 		try {
-			if(!CommonUtil.isValidProductId(productId)) {
+			if (isValidProductId(productId)) {
+				
+				Product product = productSvc.getProductDetail(productId);
+				
+				checkAndSetProdResponse(product, response);
+				if (Status.ERROR.value().equalsIgnoreCase(response.getStatus())) {
+					httpResponse.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+				} else {
+					
+
+					response.setProduct(product);
+					response.setStatus(Status.SUCCESS.value());
+				}
+
+			} else {
 				LOGGER.error("ProductController:: SearchProductResponse :: Invalid Product ID ");
-				response = (SearchProductResponse) CommonUtil.buildResponse(response, Status.ERROR, ExceptionConstants.VALIDATION_EXCEPTION.getDescription(), 
-						ExceptionConstants.VALIDATION_EXCEPTION.getErrorCode());
-				
+				response.setStatus(Status.ERROR.value());
+				response.getMessages().add(buildMessage(RetailConstants.PRODUCT_ID_VALIDATION_EXCEPTION.getCode(),
+						RetailConstants.PRODUCT_ID_VALIDATION_EXCEPTION.getDescription()));
+				httpResponse.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			}
-			else {
-				Product product = new Product();	
-				//Parallel execution Start
-				long execstartTime = System.currentTimeMillis();
-				execstartTime = System.currentTimeMillis();
-				CompletableFuture<Product> productAsync = productSvc.getProductNameAsyncMode(productId);
-				CompletableFuture<Price>  priceAsync = productSvc.getProductPriceAsyncMode(productId);
-				 // Wait until they are all done
-		        CompletableFuture.allOf(productAsync,priceAsync).join();
-		        long elapsedTime = System.currentTimeMillis() -execstartTime;
-				LOGGER.debug("Total exec time for Parallel execution  {}", elapsedTime);
-				product  = productAsync.get();
-				Price current_price = priceAsync.get();
-				product.setId(productId);
-				product.setCurrent_price(current_price);
-				if(product!=null && current_price !=null)
-					LOGGER.debug("Prodcut Id :{} :: Product Name {} :: Product Price :{} ",productId, product.getName() , product.getCurrent_price().getValue());
-				//Parallel execution End
-				
-				response.setProduct(product);
-				response.setStatus("SUCCESS");
-			}
-			
-		}catch (Exception ex) {
-			LOGGER.error("Exception while retrieving the products "+ ex.getMessage());
+
+		} catch (RetailServiceException ex) {
+			LOGGER.error("Exception while retrieving the products " + ex.getMessage());
+			response.getMessages().add(buildMessage(ex.getErrorCode(), ex.getDescription()));
+			response.setStatus(Status.ERROR.value());
+			httpResponse.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 		}
 		return response;
 	}
-	
 
 	
-	@RequestMapping(value ="/v1/products", method=RequestMethod.POST)
+
+	private void checkAndSetProdResponse(Product product, ProductResponse response) {
+		if (product == null || product.getName()==null) {
+			response.setStatus(Status.ERROR.value());
+			response.getMessages().add(buildMessage(RetailConstants.PRODUCT_NAME_NOT_FOUND_EXCEPTION.getCode(),
+					RetailConstants.PRODUCT_NAME_NOT_FOUND_EXCEPTION.getDescription()));
+
+		}
+		if (product == null || product.getCurrent_price() == null) {
+			response.setStatus(Status.ERROR.value());
+			response.getMessages().add(buildMessage(RetailConstants.PRODUCT_PRICE_NOT_FOUND_EXCEPTION.getCode(),
+					RetailConstants.PRODUCT_PRICE_NOT_FOUND_EXCEPTION.getDescription()));
+
+		}
+
+	}
+
+	@RequestMapping(value = "/v1/products", method = RequestMethod.POST)
 	public void createProducts() {
 		productSvc.delete();
-		productSvc.save(new ProductPriceEntity(20,new BigDecimal(1000.00),"USD"));
-		productSvc.save(new ProductPriceEntity(30,new BigDecimal(2000.00),"USD"));
-		productSvc.save(new ProductPriceEntity(13860428,new BigDecimal(100.00),"USD"));
+		productSvc.save(new ProductPriceEntity("13860427", BigDecimal.valueOf(1000.00), "USD"));
+		productSvc.save(new ProductPriceEntity("13860428", BigDecimal.valueOf(2000.00), "USD"));
+		productSvc.save(new ProductPriceEntity("13860429", BigDecimal.valueOf(100.00), "USD"));
+	
+
 	}
-	
-	@RequestMapping(value ="/v1/products/{productId}", method=RequestMethod.PUT)
-	public void  modifyProduct(@RequestBody Product product) {
-	
-			productSvc.modifyProdct(product);
-			
-			//Testing
-			
-			Price updatedPrice  = productSvc.getProductPrice(product.getId());
-			if(updatedPrice!=null) {
-				LOGGER.debug("Update Value  {}" ,  updatedPrice.getValue());
+
+	@RequestMapping(value = "/v1/products/{productId}", method = RequestMethod.PUT)
+	public ProductResponse modifyProduct(@RequestBody Product product, HttpServletResponse httpResponse) {
+
+		ProductResponse response = new ProductResponse();
+		try {
+			if (product != null) {
+
+				isValidRequest(product, response);
+				if (Status.ERROR.value().equalsIgnoreCase(response.getStatus())) {
+					httpResponse.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+				}
+
+				else {
+					productSvc.modifyProduct(product);
+					response.setStatus(Status.SUCCESS.value());
+					response.getMessages().add(buildMessage(RetailConstants.PRODUCT_UPDATE_SUCCESSFUL.getCode(),
+							RetailConstants.PRODUCT_UPDATE_SUCCESSFUL.getDescription()));
+				}
+
+			} else {
+				response.setStatus(Status.ERROR.value());
+				response.getMessages().add(buildMessage(RetailConstants.PRODUCT_OBJ_NOT_FOUND_EXCEPTION.getCode(),
+						RetailConstants.PRODUCT_OBJ_NOT_FOUND_EXCEPTION.getDescription()));
+				
+				httpResponse.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			}
-		
-		
-		
+		} catch (RetailServiceException ex) {
+			LOGGER.error("Exception while Updating the products " + ex.getMessage());
+			response.getMessages().add(buildMessage(ex.getErrorCode(), ex.getDescription()));
+			response.setStatus(Status.ERROR.value());
+			httpResponse.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+		}
+
+		return response;
+
 	}
+
+	private void isValidRequest(Product product, ProductResponse response) {
+		if (!isValidProductId(product.getId())) {
+			response.getMessages().add(buildMessage(RetailConstants.PRODUCT_ID_VALIDATION_EXCEPTION.getCode(),
+					RetailConstants.PRODUCT_ID_VALIDATION_EXCEPTION.getDescription()));
+		}
+		if (product.getCurrent_price() == null
+				|| product.getCurrent_price().getValue().compareTo(BigDecimal.ZERO) <= 0) {
+			response.getMessages().add(buildMessage(RetailConstants.PRODUCT_PRICE_VALIDATION_EXCEPTION.getCode(),
+					RetailConstants.PRODUCT_PRICE_VALIDATION_EXCEPTION.getDescription()));
+		}
+
+		if (!response.getMessages().isEmpty())
+			response.setStatus(Status.ERROR.value());
+
+	}
+
+	private boolean isValidProductId(long id) {
+		return (id > 0) ? true : false;
+	}
+
+	private Message buildMessage(String code, String description) {
+		return new Message(code, description);
+	}
+
+	private void logDebugMsg(String msg) {
+		if (LOGGER.isDebugEnabled()) {
+			LOGGER.debug(msg);
+		}
+
+	}
+	
+	
 
 }

@@ -21,5 +21,11 @@ public class RetailServiceException extends RuntimeException {
 		return description;
 	}
 	
+	public RetailServiceException(String errorCode, String description, String message) {
+		super(message);
+		this.errorCode = errorCode;
+		this.description = description;
+	}
+	
 	
 }
