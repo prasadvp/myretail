@@ -79,6 +79,7 @@ public class ProductServiceImpl implements ProductService {
 		restTemplate = new RestTemplateBuilder().build();
 	}
 
+	 @Override
 	public void modifyProduct(Product product) {
 
 		LOGGER.info("Price to be updated as {} for {}",product.getCurrent_price().getValue() , product.getId());
@@ -86,23 +87,26 @@ public class ProductServiceImpl implements ProductService {
 		ProductPriceEntity updatedProd = new ProductPriceEntity(Long.toString(product.getId()),
 				product.getCurrent_price().getValue(), product.getCurrent_price().getCurrency_code());
 		try {
-			save(updatedProd);
-		} catch (Exception ex) {
+			prodDAO.update(updatedProd);
+		}catch (RetailServiceException ex) {
+			throw ex;
+		} 
+		catch (Exception ex) {
 			throw new RetailServiceException(RetailConstants.DEFAULT_EXCEPTION.getCode(),
 					RetailConstants.DEFAULT_EXCEPTION.getDescription(), ex.getMessage());
 		}
 
 		
 	}
-
+	 @Override
 	public void delete() {
 		prodDAO.delete();
 	}
-
+	 @Override
 	public void save(ProductPriceEntity entity) {
 		prodDAO.saveOrUpdate(entity);
 	}
-
+  @Override
 	public Product getProductDetail(long productId) {
 		Product product = null;
 		try {
@@ -118,6 +122,7 @@ public class ProductServiceImpl implements ProductService {
 			if (product == null) {
 				product = new Product();
 			}
+			product.setId(productId);
 			product.setCurrent_price(currentPrice);
 
 		} catch (Exception ex) {

@@ -33,7 +33,17 @@ public class ProductController {
 
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ProductController.class);
-
+/**
+ * This method used to get the product details (name and price) from two different sources 
+ * for given product id. 
+ * It fetches the information in async mode , consolidate the response and return it.
+ * it validates whether the input product id is valid - > 0, product name  or price is null
+ * and throws exception with proper httpstatus code is being set
+ * All exceptions are wrapped as RetailServiceException
+ * @param productId
+ * @param httpResponse
+ * @return
+ */
 	@RequestMapping(value = "/v1/products/{productId}", method = RequestMethod.GET)
 	public ProductResponse getProducts(@PathVariable Long productId, HttpServletResponse httpResponse) {
 		ProductResponse response = new ProductResponse();
@@ -49,8 +59,6 @@ public class ProductController {
 				if (Status.ERROR.value().equalsIgnoreCase(response.getStatus())) {
 					httpResponse.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 				} else {
-					
-
 					response.setProduct(product);
 					response.setStatus(Status.SUCCESS.value());
 				}
@@ -71,7 +79,12 @@ public class ProductController {
 		}
 		return response;
 	}
-
+/**
+ * This method evaluate the product name and price for null conditions and set 
+ * appropriate message in the response object
+ * @param product
+ * @param response
+ */
 	
 
 	private void checkAndSetProdResponse(Product product, ProductResponse response) {
@@ -89,6 +102,9 @@ public class ProductController {
 		}
 
 	}
+	/**
+	 * This is a test method used for creating the products at the start of execution
+	 */
 
 	@RequestMapping(value = "/v1/products", method = RequestMethod.POST)
 	public void createProducts() {
@@ -99,7 +115,15 @@ public class ProductController {
 	
 
 	}
-
+/**
+ * This method will modify the price information of a product. It also checks for the valid
+ * product id, price information is present and return success /error message. 
+ * In case of error, the RetailServiceException is being thrown from the internal methods which 
+ * used to set the error code and message in the response object
+ * @param product
+ * @param httpResponse
+ * @return
+ */
 	@RequestMapping(value = "/v1/products/{productId}", method = RequestMethod.PUT)
 	public ProductResponse modifyProduct(@RequestBody Product product, HttpServletResponse httpResponse) {
 
@@ -136,7 +160,13 @@ public class ProductController {
 		return response;
 
 	}
-
+/**
+ * This method to check whether the product sent in the request is valid. this method
+ * is called from {@link #modifyProduct(	Request Body, HttpServletResponse)} modifyProduct method. it checks for valid product id 
+ * and product price to be updated is > 0
+ * @param product
+ * @param response
+ */
 	private void isValidRequest(Product product, ProductResponse response) {
 		if (!isValidProductId(product.getId())) {
 			response.getMessages().add(buildMessage(RetailConstants.PRODUCT_ID_VALIDATION_EXCEPTION.getCode(),
@@ -153,10 +183,20 @@ public class ProductController {
 
 	}
 
+	/**
+	 * This is a util method called to check whether product id is > 0 
+	 * @param id
+	 * @return
+	 */
 	private boolean isValidProductId(long id) {
 		return (id > 0) ? true : false;
 	}
-
+/**
+ * This method to build the Message object for the given code and description
+ * @param code
+ * @param description
+ * @return
+ */
 	private Message buildMessage(String code, String description) {
 		return new Message(code, description);
 	}

@@ -9,7 +9,7 @@ public enum RetailConstants {
 	PRODUCT_NAME_NOT_FOUND_EXCEPTION("RSVC-4001", "Unable to find Product Name"),
 	PRODUCT_PRICE_NOT_FOUND_EXCEPTION("RSVC-4002", "Unable to find Product Price"),
 	PRODUCT_PRICE_VALIDATION_EXCEPTION("RSVC-4003", "Invalid Product Price "),
-	PRODUCT_OBJ_NOT_FOUND_EXCEPTION("RSVC-4004", "Product Object was not passed "),
+	PRODUCT_OBJ_NOT_FOUND_EXCEPTION("RSVC-4004", "Product Information does not exist"),
 	PRODUCT_UPDATE_SUCCESSFUL("RSVC-2000", "Product details updated successfully");
 	
 	private final String code;

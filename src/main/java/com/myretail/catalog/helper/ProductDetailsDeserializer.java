@@ -24,6 +24,10 @@ public class ProductDetailsDeserializer extends JsonDeserializer<Product> {
 	public static final String TITLE_NODE = "title";
 	
 	@Override
+	/**
+	 * This method will deserialize to product either from ModifyProduct
+	 * request or Product Details API.
+	 */
 	public Product deserialize(JsonParser jp, DeserializationContext context)  {
 
 		Product prodObj = new Product();

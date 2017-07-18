@@ -7,7 +7,7 @@ import com.myretail.catalog.persistence.entity.ProductPriceEntity;
 
 
 
-@Repository
+@Repository("ProductPriceRepoistory")
 public interface ProductPriceRepoistory extends MongoRepository<ProductPriceEntity, String> {
 
 	
