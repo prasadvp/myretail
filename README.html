@@ -139,7 +139,15 @@ $(document).ready(function () {
 <li><p>set the JAVA_HOME , M2_HOME, MongoDB as environment variable.</p></li>
 </ul>
 <p>Replace the folder location as appropriate For Example, in MAC edit .bash_profile in Terminal and set the following :</p>
-<p>export JAVA_HOME=<span class="math inline">\((/usr/libexec/java_home) export M2_HOME=/Users/VP/Documents/Software/apache-maven-3.5.0 export PATH=\)</span>PATH:<span class="math inline">\(M2_HOME/bin export MANGO_HOME=/Users/VP/Documents/Software/mongodb-osx-x86_64-3.4.6 export PATH=\)</span>PATH:$MANGO_HOME/bin</p>
+<pre>
+
+export JAVA_HOME=$(/usr/libexec/java_home)
+export M2_HOME=/Users/VP/Documents/Software/apache-maven-3.5.0
+export PATH=$PATH:$M2_HOME/bin
+export MANGO_HOME=/Users/VP/Documents/Software/mongodb-osx-x86_64-3.4.6
+export PATH=$PATH:$MANGO_HOME/bin
+
+</pre>
 <p>Import it as standard maven project in IDE of your choice. As a last step, run “mvn clean package” and find the jar in the target folder</p>
 </div>
 <div id="running" class="section level2">
@@ -176,14 +184,30 @@ $(document).ready(function () {
 </div>
 <div id="fetch-products" class="section level3">
 <h3>Fetch Products</h3>
-<p>This service will take the product id as path parameter, does basic validation, retrieves the product name from an external API and price information from local NOSQL Mongog DB. Both of them are executed asynchronously for quick turnaround. The Product information are cached for future requests which helps in quick reterival</p>
-<pre class="java"><code>@RequestMapping(value = &quot;/v1/products/{productId}&quot;, method = RequestMethod.GET)
+<p>This service will take the product id as path parameter, does basic validation, retrieves the product name from an external API and price information from local NOSQL database. Both of them are executed asynchronously for quick turnaround. The Product information are cached for future requests which helps in quick reterival</p>
+<pre class="java"><code>
+/**
+ * This method used to get the product details (name and price) from two different sources 
+ * for given product id. 
+ * It fetches the information in async mode , consolidate the response and return it.
+ * it validates whether the input product id is valid - &gt; 0, product name  or price is null
+ * and throws exception with proper httpstatus code is being set
+ * All exceptions are wrapped as RetailServiceException
+ * @param productId
+ * @param httpResponse
+ * @return
+ */
+@RequestMapping(value = &quot;/v1/products/{productId}&quot;, method = RequestMethod.GET)
     public ProductResponse getProducts(@PathVariable Long productId, HttpServletResponse httpResponse)
     
+    
+Sample Request / Response 
+
     HTTP Method: GET
     Headers: 
     Content-Type: application/json
-    http://localhost:8080/retail/v1/products/13860428
+
+URI:    http://localhost:8080/retail/v1/products/13860428
     
     Response: 
         {
@@ -201,7 +225,122 @@ $(document).ready(function () {
     
     </code></pre>
 </div>
+<div id="modify-product" class="section level3">
+<h3>Modify Product</h3>
+<p>This service is used to update the price detail for given product. It validates the product id and price information, updates the price detail in database. It also update the cache with latest price information. This service checks for the auth token from the headers, validates and only if successful allow the user to update the price information</p>
+<pre class="java"><code>/**
+ * This method will modify the price information of a product. It also checks for the valid
+ * product id, price information is present and return success /error message. 
+ * In case of error, the RetailServiceException is being thrown from the internal methods which 
+ * used to set the error code and message in the response object
+ * @param product
+ * @param httpResponse
+ * @return
+ */
+    @RequestMapping(value = &quot;/v1/products/{productId}&quot;, method = RequestMethod.PUT)
+    public ProductResponse modifyProduct(@RequestBody Product product, HttpServletResponse httpResponse) 
+    
+    
+    
+Sample Request / Response:
+
+HTTP Method: PUT
+Headers:
+Content-Type: application/json
+Auth-Token: password
+
+URL: http://localhost:8080/retail/v1/products/13860428
+
+
+{
+&quot;product&quot;: {
+&quot;current_price&quot;: {
+&quot;value&quot;: 140,
+&quot;currency_code&quot;: &quot;USD&quot;
+},
+&quot;product_id&quot;: 13860428,
+&quot;title&quot;: &quot;The Big Lebowski (Blu-ray)&quot;
+}
+}
+
+
+Response:
+
+{
+&quot;status&quot;: &quot;SUCCESS&quot;,
+&quot;messages&quot;: [
+  {
+&quot;code&quot;: &quot;RSVC-2000&quot;,
+&quot;description&quot;: &quot;Product details updated successfully&quot;
+}
+],
+&quot;product&quot;: null
+}
+</code></pre>
 </div>
+<div id="error-handling" class="section level3">
+<h3>Error Handling</h3>
+<p>There are defined error codes and descriptions which will be set on different scenarios. This will help the user to take corrective actions</p>
+<p>Sample error codes:</p>
+<pre class="java"><code>    DEFAULT_EXCEPTION (&quot;CERR-1000&quot;,&quot;Retail service Default Exception&quot;),
+    JSON_DESERIALIZE_EXCEPTION(&quot;CERR-1001&quot;, &quot;Unable to deserialize JSON object&quot;),
+    WEB_SERVICE_EXCEPTION(&quot;WERR-5000&quot;, &quot;Web service Exception &quot;),
+    PRODUCT_ID_VALIDATION_EXCEPTION(&quot;RSVC-4000&quot;, &quot;Invalid Product ID&quot;),
+    PRODUCT_NAME_NOT_FOUND_EXCEPTION(&quot;RSVC-4001&quot;, &quot;Unable to find Product Name&quot;),
+    PRODUCT_PRICE_NOT_FOUND_EXCEPTION(&quot;RSVC-4002&quot;, &quot;Unable to find Product Price&quot;),
+    PRODUCT_PRICE_VALIDATION_EXCEPTION(&quot;RSVC-4003&quot;, &quot;Invalid Product Price &quot;),
+    PRODUCT_OBJ_NOT_FOUND_EXCEPTION(&quot;RSVC-4004&quot;, &quot;Product Information does not exist&quot;),
+    PRODUCT_UPDATE_SUCCESSFUL(&quot;RSVC-2000&quot;, &quot;Product details updated successfully&quot;);
+
+
+Sample error response:
+
+Fetching product for Invalid ID:
+
+GET: 
+http://localhost:8080/retail/v1/products/0
+
+
+Response:
+
+    {
+    &quot;status&quot;: &quot;ERROR&quot;,
+    &quot;messages&quot;: [
+      {
+    &quot;code&quot;: &quot;RSVC-4000&quot;,
+    &quot;description&quot;: &quot;Invalid Product ID&quot;
+    }
+    ],
+    &quot;product&quot;: null
+    }
+
+
+Product ID does not exist 
+
+http://localhost:8080/retail/v1/products/100
+
+
+    {
+    &quot;status&quot;: &quot;ERROR&quot;,
+    &quot;messages&quot;: [
+      {
+    &quot;code&quot;: &quot;RSVC-4001&quot;,
+    &quot;description&quot;: &quot;Unable to find Product Name&quot;
+    },
+      {
+    &quot;code&quot;: &quot;RSVC-4002&quot;,
+    &quot;description&quot;: &quot;Unable to find Product Price&quot;
+    }
+    ],
+    &quot;product&quot;: null
+    }
+</code></pre>
+</div>
+</div>
+</div>
+<div id="references" class="section level1">
+<h1>References</h1>
+<p>[Spring boot] [<a href="https://projects.spring.io/spring-boot/" class="uri">https://projects.spring.io/spring-boot/</a>]</p>
 </div>
 
 
