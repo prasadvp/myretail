@@ -8,6 +8,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import com.myretail.catalog.exception.RetailServiceException;
+
 @Aspect
 @Component
 public class LoggingAspect {
@@ -40,8 +42,11 @@ public class LoggingAspect {
 			LOGGER.info("END EXECUTION : {}  Execution time {} ms" , logMsg , elapsedTime );
 			
 			
-		} catch (Exception e) {
-			LOGGER.info("Exception occurred while instrumenting {} ", e.getMessage());
+		} catch (RetailServiceException ex) {
+			throw ex;
+		} 
+			catch (Exception e) {
+			LOGGER.warn("Exception occurred while instrumenting {} ", e.getMessage());
 		}
 		 
 		 return retVal;

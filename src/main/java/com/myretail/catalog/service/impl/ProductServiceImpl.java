@@ -87,7 +87,8 @@ public class ProductServiceImpl implements ProductService {
 		ProductPriceEntity updatedProd = new ProductPriceEntity(Long.toString(product.getId()),
 				product.getCurrent_price().getValue(), product.getCurrent_price().getCurrency_code());
 		try {
-			prodDAO.update(updatedProd);
+			 prodDAO.update(updatedProd);
+				
 		}catch (RetailServiceException ex) {
 			throw ex;
 		} 
